@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in | BuildQuote AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="auth-page">
+
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="index.html" aria-label="BuildQuote AI home">
+        <span class="brand-mark" aria-hidden="true"></span>BuildQuote AI
+      </a>
+    </div>
+  </header>
+
+  <main class="auth-main">
+    <section class="auth-card">
+      <div class="auth-tabs" role="tablist">
+        <button type="button" role="tab" id="tab-signin" aria-selected="true" data-mode="signin">Sign in</button>
+        <button type="button" role="tab" id="tab-signup" aria-selected="false" data-mode="signup">Create account</button>
+      </div>
+
+      <form id="auth-form" novalidate>
+        <h1 id="auth-title">Welcome back</h1>
+
+        <label class="field" id="name-field" hidden>
+          <span>Your name</span>
+          <input type="text" name="name" autocomplete="name">
+        </label>
+
+        <label class="field">
+          <span>Email</span>
+          <input type="email" name="email" autocomplete="email" required>
+        </label>
+
+        <label class="field">
+          <span>Password</span>
+          <input type="password" name="password" autocomplete="current-password" minlength="8" required>
+          <small id="pw-hint" hidden>At least 8 characters.</small>
+        </label>
+
+        <p class="form-msg" id="form-msg" role="alert" hidden></p>
+
+        <button class="btn btn-primary btn-block" type="submit" id="submit-btn">Sign in</button>
+      </form>
+    </section>
+  </main>
+
+  <script type="module">
+    import { auth, currentUser } from './auth.js';
+
+    const form = document.getElementById('auth-form');
+    const msg = document.getElementById('form-msg');
+    const btn = document.getElementById('submit-btn');
+    const title = document.getElementById('auth-title');
+    const nameField = document.getElementById('name-field');
+    const pwHint = document.getElementById('pw-hint');
+    const pwInput = form.elements.password;
+    let mode = 'signin';
+
+    if (await currentUser()) location.replace('account.html');
+
+    function setMode(next) {
+      mode = next;
+      const signup = mode === 'signup';
+      document.querySelectorAll('[data-mode]').forEach(b =>
+        b.setAttribute('aria-selected', String(b.dataset.mode === mode)));
+      title.textContent = signup ? 'Create your account' : 'Welcome back';
+      btn.textContent = signup ? 'Create account' : 'Sign in';
+      nameField.hidden = !signup;
+      pwHint.hidden = !signup;
+      pwInput.autocomplete = signup ? 'new-password' : 'current-password';
+      msg.hidden = true;
+    }
+    document.querySelectorAll('[data-mode]').forEach(b =>
+      b.addEventListener('click', () => setMode(b.dataset.mode)));
+    if (location.hash === '#signup') setMode('signup');
+
+    function showError(text) {
+      msg.textContent = text;
+      msg.hidden = false;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = form.elements.email.value.trim();
+      const password = pwInput.value;
+      const name = form.elements.name.value.trim();
+
+      if (!email || !password) return showError('Enter your email and password.');
+      if (mode === 'signup' && password.length < 8) return showError('Password must be at least 8 characters.');
+
+      btn.disabled = true;
+      msg.hidden = true;
+      try {
+        const result = mode === 'signup'
+          ? await auth.signUp.email({ email, password, name: name || email.split('@')[0] })
+          : await auth.signIn.email({ email, password });
+        if (result.error) {
+          showError(result.error.message || 'Something went wrong. Please try again.');
+        } else {
+          location.href = 'account.html';
+        }
+      } catch (err) {
+        showError('Could not reach the sign-in service. Check your connection and try again.');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

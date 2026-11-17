@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My account | BuildQuote AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="auth-page">
+
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="index.html" aria-label="BuildQuote AI home">
+        <span class="brand-mark" aria-hidden="true"></span>BuildQuote AI
+      </a>
+    </div>
+  </header>
+
+  <main class="auth-main">
+    <section class="auth-card" id="account" hidden>
+      <h1>My account</h1>
+      <dl class="account-info">
+        <dt>Name</dt><dd id="acct-name"></dd>
+        <dt>Email</dt><dd id="acct-email"></dd>
+        <dt>User ID</dt><dd id="acct-id" class="mono"></dd>
+      </dl>
+      <p class="muted">BuildQuote AI is still in development. You'll be among the first to try it when it's ready.</p>
+      <button class="btn btn-primary btn-block" type="button" id="signout-btn">Sign out</button>
+    </section>
+  </main>
+
+  <script type="module">
+    import { auth, currentUser } from './auth.js';
+
+    const user = await currentUser();
+    if (!user) {
+      location.replace('login.html');
+    } else {
+      document.getElementById('acct-name').textContent = user.name || '—';
+      document.getElementById('acct-email').textContent = user.email;
+      document.getElementById('acct-id').textContent = user.id;
+      document.getElementById('account').hidden = false;
+    }
+
+    document.getElementById('signout-btn').addEventListener('click', async () => {
+      await auth.signOut();
+      location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>
