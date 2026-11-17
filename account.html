@@ -26,6 +26,7 @@
         <dt>Name</dt><dd id="acct-name"></dd>
         <dt>Email</dt><dd id="acct-email"></dd>
         <dt>User ID</dt><dd id="acct-id" class="mono"></dd>
+        <dt>Member since</dt><dd id="acct-since">Loading…</dd>
       </dl>
       <p class="muted">BuildQuote AI is still in development. You'll be among the first to try it when it's ready.</p>
       <button class="btn btn-primary btn-block" type="button" id="signout-btn">Sign out</button>
@@ -43,6 +44,21 @@
       document.getElementById('acct-email').textContent = user.email;
       document.getElementById('acct-id').textContent = user.id;
       document.getElementById('account').hidden = false;
+      loadFromServer();
+    }
+
+    // Asks our own server (api/me.js) for the account, proving the database connection works.
+    async function loadFromServer() {
+      const since = document.getElementById('acct-since');
+      try {
+        const token = await auth.getJWTToken();
+        const res = await fetch('/api/me', { headers: { Authorization: `Bearer ${token}` } });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.error || res.statusText);
+        since.textContent = new Date(body.user.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+      } catch (err) {
+        since.textContent = `Unavailable (${err.message})`;
+      }
     }
 
     document.getElementById('signout-btn').addEventListener('click', async () => {
